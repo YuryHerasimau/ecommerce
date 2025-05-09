@@ -3,3 +3,4 @@ djangorestframework==3.14.0
 django-filter==23.3
 psycopg2==2.9.9
 environs[django]==9.5.0
+Faker==37.1.0
