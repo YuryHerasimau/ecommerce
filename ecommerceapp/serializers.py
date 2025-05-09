@@ -1,37 +1,52 @@
 from rest_framework import serializers
-from .models import Address, Contact, Product, Employee, Supplier, Network
+from .models import Address, Contact, Product, Employee, Network
 
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = '__all__'
+
+class ContactSerializer(serializers.ModelSerializer):
+    address = AddressSerializer()
+    
+    class Meta:
+        model = Contact
+        fields = '__all__'
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+class EmployeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = '__all__'
 
 class NetworkSerializer(serializers.ModelSerializer):
-
-    contact = serializers.SlugRelatedField(queryset=Contact.objects.all(), slug_field='email')
-    product = serializers.SlugRelatedField(queryset=Product.objects.all(), many=True, slug_field='name')
-    employee = serializers.SlugRelatedField(queryset=Employee.objects.all(), slug_field='name')
-    supplier = serializers.SlugRelatedField(queryset=Supplier.objects.all(), slug_field='name')
-
-    class Meta:
-        model = Network
-        fields = ('id', 'name', 'contact', 'product', 'employee', 'supplier', 'debt', 'created_at')
-        read_only_fields = ('debt', )
-
-
-class NetworkCreateSerializer(NetworkSerializer):
+    contact = ContactSerializer()
+    products = ProductSerializer(many=True)
+    employees = EmployeeSerializer(many=True, read_only=True)
+    supplier = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    level = serializers.CharField(source='get_level_display', read_only=True)
 
     class Meta:
         model = Network
-        fields = ('id', 'name', 'contact', 'product', 'employee', 'supplier', 'debt')
+        fields = '__all__'
+        read_only_fields = ('debt', 'created_at')
 
-
-class NetworkUpdateSerializer(NetworkSerializer):
+class NetworkCreateSerializer(serializers.ModelSerializer):
+    products = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        queryset=Product.objects.all()
+    )
     
     class Meta:
         model = Network
-        fields = ('id', 'name', 'contact', 'product', 'employee', 'supplier', 'debt')
-        read_only_fields = ('debt', )
+        fields = '__all__'
+        read_only_fields = ('debt', 'created_at')
 
-
-class NetworkDebtStatisticsSerializer(NetworkSerializer):
-
+class NetworkDebtSerializer(serializers.ModelSerializer):
     class Meta:
         model = Network
         fields = ('id', 'name', 'debt')

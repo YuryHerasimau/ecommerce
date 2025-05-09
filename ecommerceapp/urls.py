@@ -1,11 +1,16 @@
 from django.urls import path
 from rest_framework import routers
-from .views import NetworkViewSet, NetworkAvgDebtStatisticsAPIView
+from .views import (
+    NetworkViewSet,
+    ProductViewSet,
+    NetworkStatsAPIView
+)
 
 
 router = routers.DefaultRouter()
-router.register('api/network', NetworkViewSet, 'network')
+router.register(r"networks", NetworkViewSet)
+router.register(r"products", ProductViewSet)
 
 urlpatterns = router.urls + [
-    path('debt_statistics/', NetworkAvgDebtStatisticsAPIView.as_view(), name='avg-debt'),
+    path('debt_statistics/', NetworkStatsAPIView.as_view(), name='network-stats'),
 ]
