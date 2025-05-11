@@ -55,9 +55,9 @@ class Command(BaseCommand):
         
         # Создание сетей и сотрудников
         networks = []
-        levels = [0, 1, 2, 3, 4] * 3  # Repeat levels for variety
+        levels = [0, 1, 2, 3, 4] * 5  # Repeat levels for variety
 
-        for i in range(15):
+        for i in range(25):
             network = Network.objects.create(
                 name=fake.company(),
                 level=levels[i],

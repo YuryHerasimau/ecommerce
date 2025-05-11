@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'ecommerceapp',
     'rest_framework',
     'django_filters',
+    'django_celery_beat',
+    # 'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +139,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TIMEZONE = 'Europe/Moscow'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

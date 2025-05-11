@@ -4,3 +4,6 @@ django-filter==23.3
 psycopg2==2.9.9
 environs[django]==9.5.0
 Faker==37.1.0
+celery==5.5.2
+django-celery-beat==2.8.0
+redis==6.0.0

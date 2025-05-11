@@ -1,10 +1,19 @@
 from django.contrib import admin
 from .models import Address, Contact, Product, Employee, Network
+from .tasks import async_clear_debt
 
 
 @admin.action(description="Очистить задолженность перед поставщиком у выбранных объектов")
 def clear_debt(modeladmin, request, queryset):
-    queryset.update(debt=0)
+    if queryset.count() > 20:
+        # Асинхронная обработка для большого количества объектов
+        network_ids = list(queryset.values_list('id', flat=True))
+        async_clear_debt.delay(network_ids)
+        modeladmin.message_user(request, "Запущена фоновая очистка задолженности для выбранных сетей")
+    else:
+        # Синхронная обработка для малого количества
+        queryset.update(debt=0)
+        modeladmin.message_user(request, f"Задолженность очищена для {queryset.count()} сетей")
 
 
 class EmployeeInline(admin.TabularInline):
