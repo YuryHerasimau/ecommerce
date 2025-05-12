@@ -1,9 +1,14 @@
-from celery import shared_task
-from django.db import transaction
-from .models import Network
+import qrcode
 import random
+from io import BytesIO
 from datetime import datetime
 from decimal import Decimal
+from celery import shared_task
+from django.db import transaction
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+# from ecommerce.settings import DEFAULT_FROM_EMAIL
+from .models import Network
 
 
 @shared_task
@@ -51,3 +56,41 @@ def async_clear_debt(network_ids):
         Network.objects.filter(id__in=network_ids).update(debt=0)
     
     return f"Cleared debt for {len(network_ids)} networks at {datetime.now()}"
+
+
+@shared_task(bind=True)
+def generate_and_send_qr(self, network_id, user_email):
+    try:
+        network = Network.objects.get(id=network_id)
+        
+        # Генерация QR-кода
+        contact_data = f"""
+        {network.name}
+        Контакт: {network.contact}
+        Продукты: {network.products}
+        Уровень иерархии: {network.level}
+        Поставщик: {network.supplier}
+        Задолженность перед поставщиком: {network.debt}
+        """
+        
+        img = qrcode.make(contact_data)
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+        
+        # Подготовка письма
+        subject = f"QR-код для {network.name}"
+        body = render_to_string('email/qr_email.txt', {'network': network})
+        
+        email = EmailMessage(
+            subject,
+            body,
+            'noreply@yourdomain.com'
+            [user_email],
+        )
+        email.attach(f'{network.name}_qr.png', buffer.getvalue(), 'image/png')
+        email.send()
+        
+        return f"QR sent to {user_email}"
+    except Exception as e:
+        self.retry(exc=e, countdown=60, max_retries=3)

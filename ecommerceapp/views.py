@@ -10,6 +10,7 @@ from .serializers import (
     NetworkDebtSerializer
 )
 from .permissions import IsActiveEmployeePermission
+from .tasks import generate_and_send_qr
 
 
 class NetworkViewSet(viewsets.ModelViewSet):
@@ -41,3 +42,22 @@ class NetworkStatsAPIView(generics.GenericAPIView):
             'count': networks.count(),
             'networks': serializer.data
         })
+    
+class GenerateQRAPIView(generics.GenericAPIView):
+    serializer_class = NetworkSerializer
+    permission_classes = [IsActiveEmployeePermission]
+    
+    def post(self, request, *args, **kwargs):
+        network = self.get_object()
+        user_email = request.user.email
+        
+        # Асинхронная отправка через Celery
+        generate_and_send_qr.delay(network.id, user_email)
+        
+        return Response({
+            "status": "success",
+            "message": "QR-код генерируется и будет отправлен на ваш email"
+        })
+    
+    def get_object(self):
+        return generics.get_object_or_404(Network, pk=self.kwargs['pk'])
