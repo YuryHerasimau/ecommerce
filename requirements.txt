@@ -7,3 +7,4 @@ Faker==37.1.0
 celery==5.5.2
 django-celery-beat==2.8.0
 redis==6.0.0
+flower==2.0.1

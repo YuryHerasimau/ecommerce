@@ -38,10 +38,18 @@ Django REST API для управления многоуровневой сет�
 ## Аутентификация через CSRF Token
 
 ### 1. Получение CSRF Token
+
+Авторизуйтесь в админке:
 ```bash
-curl -X GET http://127.0.0.1:8000/api/networks/ \
+curl --location 'http://127.0.0.1:8000/admin/login/' \
+--header 'Cookie: csrftoken=ваш_csrf_токен' \
+--form 'username="ваш_username"' \
+--form 'password="ваш_password"' \
+--form 'csrfmiddlewaretoken="ваш_csrf_токен"' \
+--form 'next="/admin/"' \
 --cookie-jar cookies.txt
 ```
+
 Из файла cookies.txt или заголовков ответа получите:
 - `csrftoken`
 - `sessionid`
@@ -74,17 +82,12 @@ curl -X POST http://127.0.0.1:8000/api/networks/ \
      sessionid=<ваш_session_id>
      ```
 
-## Важные замечания
-1. Для production используйте JWT аутентификацию вместо CSRF
-2. Все POST/PUT/PATCH запросы требуют CSRF токен
-3. GET запросы доступны без аутентификации
-
 ## Полный пример запроса создания сети
 ```bash
 curl -X POST http://localhost:8000/api/networks/ \
--H "X-CSRFToken: UgSE3PPB1JYJVL8G1IhjYXfl9nYYCzqS" \
+-H "X-CSRFToken: ваш_csrf_токен" \
 -H "Content-Type: application/json" \
--H "Cookie: csrftoken=UgSE3PPB1JYJVL8G1IhjYXfl9nYYCzqS; sessionid=xelxgz2ajsobh3zjytdg5qvwluefeif8" \
+-H "Cookie: csrftoken=ваш_csrf_токен; sessionid=ваш_session_id" \
 -d '{
     "name": "Новая сеть",
     "level": 1,
@@ -209,20 +212,42 @@ GET /api/networks/stats/debt/
    - При очистке >20 сетей через админку
 
 Для работы требуется:
+
+### Установка и запуск Redis
+
 ```bash
-# Установка Redis
 sudo apt-get install redis-server
+redis-server
+```
 
-# Запуск сервисов
+Для Windows ипользуйте готовую сборку Redis:
+
+1. Скачайте Redis для Windows:
+   - Официальная портированная версия: [https://github.com/microsoftarchive/redis/releases](https://github.com/microsoftarchive/redis/releases)
+   - Скачайте `Redis-x64-*.msi` и установите
+
+2. Запустите Redis сервер:
+
+```cmd
+redis-server.exe
+```
+
+### Запуск сервисов
 
 ```bash
-# Терминал 1 - Redis:
-redis-server
-# Терминал 2 - Celery Worker:
-celery -A ecommerce worker --loglevel=info [--pool=solo]
-# Терминал 3 - Celery Beat (планировщик):
+# Запустите Celery Worker:
+celery -A ecommerce worker --loglevel=info # Linux/Mac
+celery -A ecommerce worker --loglevel=info --pool=solo # Windows
+
+# Запустите Celery Beat (планировщик):
 celery -A ecommerce beat --loglevel=info [--scheduler django_celery_beat.schedulers:DatabaseScheduler]
+
+# Запустите Flower (Визуализация и мониторинг):
+celery -A ecommerce flower --port=5555
 ```
+
+<img src="assets/worker.png" width=1000/ alt="flower-celery-worker" />
+<img src="assets/tasks.png" width=1000/ alt="flower-celery-tasks" />
 
 ## Заполнение тестовыми данными
 
